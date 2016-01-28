@@ -57,12 +57,13 @@ func main() {
 	fmt.Println(string(j))
 
 	s := config.ManualConfig("iron_mq", &c.Env)
+	t := time.Now()
 	q := mq.ConfigNew(c.QueueName, &s)
 	info, err := q.Info()
 	if err != nil {
 		log.Fatal("Could not access queue info", err)
 	}
-	fmt.Println("Queue has", info.Size, "messages.")
+	fmt.Printf("Queue has %d messages. (request took %v)\n", info.Size, time.Since(t))
 
 batchLoop:
 	for x := 0; c.MaxIterations == nil || x < *c.MaxIterations; x++ {
@@ -80,12 +81,13 @@ batchLoop:
 		timeout := float64(c.BatchSize) * c.MsgDuration.Seconds() * 1.1
 
 		// Reserve messages
+		t = time.Now()
 		msgs, err := q.LongPoll(c.BatchSize, int(timeout), 0, false)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Iteration %d: Requested %d, got %d\n", x, c.BatchSize, len(msgs))
+		fmt.Printf("Iteration %d: Requested %d, got %d (request took %v)\n", x, c.BatchSize, len(msgs), time.Since(t))
 
 		if len(msgs) == 0 && !c.KeepAlive {
 			fmt.Println("Queue is empty - breaking work loop")
@@ -111,5 +113,5 @@ batchLoop:
 		}
 	}
 
-	fmt.Println("Worker ending")
+	fmt.Println("Worker ending after", time.Since(start))
 }
