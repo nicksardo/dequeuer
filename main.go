@@ -50,7 +50,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	j, err := json.MarshalIndent(c, "", "    ")
+	copy := *c
+	copy.Env.Token = obfuscate(copy.Env.Token)
+	j, err := json.MarshalIndent(copy, "", "    ")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -114,4 +116,12 @@ batchLoop:
 	}
 
 	fmt.Println("Worker ending after", time.Since(start))
+}
+
+func obfuscate(v string) string {
+	r := []rune(v)
+	for x := len(r) / 4; x < len(r); x++ {
+		r[x] = '*'
+	}
+	return string(r)
 }
