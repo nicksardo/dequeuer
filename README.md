@@ -49,7 +49,7 @@ Visit [hud.iron.io](https://hud.iron.io) and modify the configuration for the `d
 
 
 # Process the messages
-❯❯❯ iron worker queue --wait dequeuer                                               ✚ ✱ ◼
+❯❯❯ iron worker queue --wait dequeuer
 ----->  Configuring client
         Project 'Spinnaker 1' with id='XXX'
 ----->  Queueing task 'dequeuer'
