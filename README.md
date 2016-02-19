@@ -5,11 +5,35 @@ Configurable Test Worker for Iron.io
 - You have the Iron.io CLI installed and have a `iron.json` in the local directory or `.iron.json` in your home directory.
 - You have docker installed
 
-### Build & Deploy
+### Build
+Cross compile or use docker to generate linux/amd64 executable
 ```shell
 ❯❯❯ docker run --rm -it -v $PWD:/go/src/a -w /go/src/a iron/go:dev sh -c 'go get ./... && go build -o dequeuer main.go'
+```
+
+##### Option A: Deploy by bundling into docker image
+###### 1. Build and push docker image
+```shell
+docker build -t {{youraccount}}/dequeuer:0.1 .
+docker push {{youraccount}}/dequeuer:0.1
+```
+
+###### 2. Test again by creating a config file and running your docker image
+```shell
+vi prod_config.json  # create a config file called "prod_config.json" in an empty directory
+docker run --rm -it -e "CONFIG_FILE=prod_config.json" -v $PWD:/app {{youraccount}}/dequeuer
+```
+
+###### 3.  Register your docker image with Iron.io
+```shell
+iron register {{youraccount}}/dequeuer:0.1
+```
+
+##### Option B: Deploy by creating and uploading zip file
+###### 1. Zip and upload to Iron
+```shell
 ❯❯❯ zip -r dequeuer.zip dequeuer
-❯❯❯ iron worker upload -zip dequeuer.zip -name dequeuer iron/base ./dequeuer
+❯❯❯ iron worker upload -zip dequeuer.zip -name dequeuer iron/base ./dequeuer  # Uses `iron/base` as docker image.  
 ----->  Configuring client
         Project 'Spinnaker 1' with id='XXXXX'
 ----->  Uploading worker 'dequeuer'
@@ -17,21 +41,23 @@ Configurable Test Worker for Iron.io
         Check https://hud.iron.io/tq/projects/XXX/code/YYY for more info
 ```
 
+#### Set configuration data
+Visit [hud.iron.io](https://hud.iron.io) and modify the configuration for the `nicksardo/dequeuer` code package.
 
 ### IronWorker Config
-Visit [hud.iron.io](https://hud.iron.io) and modify the configuration for the `dequeuer` code package.
 ```javascript
 {
-  "msgDuration": 1000000000,     // optional, default shown, nanoseconds
-  "iterationSleep": 1000000000,  // optional, default shown, nanoseconds
-  "maxDuration": 2700000000000,  // optional, default shown, nanoseconds
-  "batchSize": 10,               // optional, default shown
-  "keepAlive":false,             // optional, default shown
-  "maxIterations":null,          // optional, default shown
+  "msgDuration": 1000000000,     // optional, default shown, nanoseconds, time to sleep per message
+  "iterationSleep": 20000000,    // optional, default shown, nanoseconds, time to sleep between batches
+  "maxDuration": 2700000000000,  // optional, default shown, nanoseconds, max time for worker to live
+  "batchSize": 1,                // optional, default shown, size of batch
+  "maxEmptyResults": 0,          // optional, default shown, kills worker after X sequential empty queue results
+  "maxIterations": null,         // optional, default shown, max number of batch requests
+  "dequeueWait": 0,              // optional, default shown, long poll wait (0-30 seconds)
   "queueName": "sampleQueue",    // required
   "env": {                       
     "project_id": "XXX",         // required
-    "host": "abc.iron.io",       // required if on other cluster
+    "host": "abc.iron.io",       // required
     "token": "YYY"               // required
   }
 }
@@ -49,10 +75,10 @@ Visit [hud.iron.io](https://hud.iron.io) and modify the configuration for the `d
 
 
 # Process the messages
-❯❯❯ iron worker queue --wait dequeuer
+❯❯❯ iron worker queue --wait nicksardo/dequeuer
 ----->  Configuring client
         Project 'Spinnaker 1' with id='XXX'
------>  Queueing task 'dequeuer'
+----->  Queueing task 'nicksardo/dequeuer'
         Queued task with id='ABC'
         Check https://hud.iron.io/tq/projects/XXX/jobs/YYY for more info
 ----->  Waiting for task56a9be008ba9d6000601524a
