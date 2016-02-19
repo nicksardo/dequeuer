@@ -105,7 +105,7 @@ batchLoop:
 		// Handle case of zero messages
 		if len(msgs) == 0 && c.MaxEmptyResults != nil {
 			emptyResultCount++
-			if emptyResultCount > *c.MaxEmptyResults {
+			if emptyResultCount >= *c.MaxEmptyResults {
 				fmt.Println("Queue is empty - breaking work loop")
 				break
 			}
